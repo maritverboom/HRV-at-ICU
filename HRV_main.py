@@ -29,23 +29,6 @@ import HRV_preprocessing as preproc
 import HRV_calculations as hrvcalc
 
 
-#%% Workflow Single mode
-
-def workflow_single(patient_id):
-    """
-    Function in the case of single patient processing.
-    
-    INPUT:
-        patient_id: ID number of patient from MIMIC-III database
-    """
-    pt_id = patient_id
-    ecg = preproc.load_data(patient_id = pt_id)
-    ecg_df = preproc.ecg_dataframe(ecg, 'no')
-    ecg_df, r_peaks = preproc.ecg_rpeak(ecg_df, 'no')
-    
-    return ecg_df, r_peaks
-
-
 #%% Workflow Batch mode
 
 def workflow_batch(patient_ids):
@@ -81,7 +64,7 @@ def workflow_batch(patient_ids):
         ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, 'no')
         r_peaks = r_peaks/125
         nni = nni/125
-        hrv_td, hrv_fd = hrvcalc.hrv_results(r_peaks=r_peaks, sampling_rate=125)
+        hrv_td, hrv_fd = hrvcalc.hrv_results(rpeaks=r_peaks, sampling_rate=125)
         
         batch_dataframes.append(ecg_df)
         batch_rpeaks.append(r_peaks)
@@ -89,17 +72,24 @@ def workflow_batch(patient_ids):
         batch_td.append(hrv_td)
         batch_fd.append(hrv_fd)
         
-    return batch_dataframes, batch_rpeaks, batch_td, batch_fd, batch_nni
+    # Exportfile
+    tuplekeys = batch_td[0].keys()
+    matrix_td = []
+    for key in tuplekeys:
+        matrix_td += [batch_td[0][key]]
+    matrix_td = np.array(matrix_td)
+    for i in range(1,len(batch_td)):
+        stack = []
+        for key in tuplekeys:
+            stack += [batch_td[i][key]]
+            matrix_td = np.vstack((matrix_td, np.array(stack)))
+    export_td = pd.DataFrame(matrix_td.T, index=tuplekeys, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient
+        
+    return batch_dataframes, batch_rpeaks, batch_td, batch_fd, batch_nni, export_td
     
 
 #%% Final calculations    
-batch_df, batch_r, batch_td, batch_fd, batch_nni = workflow_batch('files_id.txt')
-
-
-#%% HANDIG om inhoud te checken
-for key in batch_td[1].keys(): print(key, batch_td[1][key])
-for key in batch_fd[1].keys(): print(key, batch_fd[1][key])
+batch_df, batch_r, batch_td, batch_fd, batch_nni, export = workflow_batch('files_id.txt')
 
 
 
-        
