@@ -75,14 +75,21 @@ def workflow_batch(patient_ids):
     # Exportfile
     tuplekeys = batch_td[0].keys()
     matrix_td = []
+    
     for key in tuplekeys:
         matrix_td += [batch_td[0][key]]
+        
     matrix_td = np.array(matrix_td)
+    
     for i in range(1,len(batch_td)):
         stack = []
+        
         for key in tuplekeys:
             stack += [batch_td[i][key]]
-            matrix_td = np.vstack((matrix_td, np.array(stack)))
+        
+        stack = np.array(stack)
+        matrix_td = np.vstack((matrix_td, stack))
+            
     export_td = pd.DataFrame(matrix_td.T, index=tuplekeys, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient
         
     return batch_dataframes, batch_rpeaks, batch_td, batch_fd, batch_nni, export_td
