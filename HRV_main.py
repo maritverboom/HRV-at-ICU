@@ -64,7 +64,7 @@ def workflow_batch(patient_ids):
         ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, 'no')
         r_peaks = r_peaks/125
         nni = nni/125
-        hrv_td, hrv_fd = hrvcalc.hrv_results(rpeaks=r_peaks, sampling_rate=125)
+        hrv_td, hrv_fd = hrvcalc.hrv_results(nni=nni, sampling_rate=125)
         
         batch_dataframes.append(ecg_df)
         batch_rpeaks.append(r_peaks)
@@ -73,30 +73,55 @@ def workflow_batch(patient_ids):
         batch_fd.append(hrv_fd)
         
     # Exportfile
-    tuplekeys = batch_td[0].keys()
+    tuplekeys_td = batch_td[0].keys()
+    tuplekeys_fd = batch_fd[0].keys()
     matrix_td = []
+    matrix_fd = []
     
-    for key in tuplekeys:
+    for key in tuplekeys_td:
         matrix_td += [batch_td[0][key]]
+    
+    for key in tuplekeys_fd:
+        matrix_fd += [batch_fd[0][key]]
         
     matrix_td = np.array(matrix_td)
+    matrix_fd = np.array(matrix_fd)
     
     for i in range(1,len(batch_td)):
         stack = []
         
-        for key in tuplekeys:
+        for key in tuplekeys_td:
             stack += [batch_td[i][key]]
         
         stack = np.array(stack)
         matrix_td = np.vstack((matrix_td, stack))
-            
-    export_td = pd.DataFrame(matrix_td.T, index=tuplekeys, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient
+    
+    for i in range(1,len(batch_fd)):
+        stack = []
         
-    return batch_dataframes, batch_rpeaks, batch_td, batch_fd, batch_nni, export_td
+        for key in tuplekeys_fd:
+            stack += [batch_fd[i][key]]
+        
+        stack = np.array(stack)
+        matrix_fd = np.vstack((matrix_fd, stack))
+            
+    export_td = pd.DataFrame(matrix_td.T, index=tuplekeys_td, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient
+    export_fd = pd.DataFrame(matrix_fd.T, index=tuplekeys_fd, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient   
+   
+    # Write calculated parameters to excel sheet
+    writer = pd.ExcelWriter('HRV parameters.xlsx', engine = 'xlsxwriter')
+    export_td.to_excel(writer, sheet_name='Time Domain')
+    export_fd.to_excel(writer, sheet_name='Frequency Domain')
+    #export_nl.to_excel(writer, sheet_name='Non Linear')
+    #export_temp.to_excel(writer, sheet_name='Temp')
+    writer.save()
+    
+    return batch_dataframes, batch_rpeaks, batch_td, batch_nni, export_td
     
 
 #%% Final calculations    
-batch_df, batch_r, batch_td, batch_fd, batch_nni, export = workflow_batch('files_id.txt')
+batch_df, batch_r, batch_td, batch_nni, export_td = workflow_batch('files_id.txt')
 
+                         
 
 
