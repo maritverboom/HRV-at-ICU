@@ -53,6 +53,8 @@ def workflow_batch(patient_ids):
     batch_fd = list()
     batch_nni = list()
     
+    sampling_rate = 125
+    
     # Read .txt file containing patient IDs
     with open(pt_ids) as f:                                                     
         lines = [x.strip() for x in list(f) if x]
@@ -61,9 +63,7 @@ def workflow_batch(patient_ids):
     for line in lines:
         ecg = preproc.load_data(patient_id = line)
         ecg_df = preproc.ecg_dataframe(ecg, 'no')
-        ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, 'no')
-        r_peaks = r_peaks/125
-        nni = nni/125
+        ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate, 'no')
         hrv_td, hrv_fd = hrvcalc.hrv_results(nni=nni, sampling_rate=125)
         
         batch_dataframes.append(ecg_df)
@@ -120,7 +120,7 @@ def workflow_batch(patient_ids):
     
 
 #%% Final calculations    
-batch_df, batch_r, batch_td, batch_nni, export_td = workflow_batch('files_id.txt')
+batch_df, batch_r, batch_td, batch_nni, export_td = workflow_batch('files_id_test.txt')
 
                          
 

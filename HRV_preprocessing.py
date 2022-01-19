@@ -80,7 +80,7 @@ def ecg_dataframe(record, plot='no'):
     return ecg_df
            
 
-def ecg_rpeak(ecg_df, plot='no'):
+def ecg_rpeak(ecg_df, sampling_rate, plot='no'):
     """
     Function that uses bioSPPY toolbox in order to filter the ECG signal and
     detect R-peaks
@@ -89,6 +89,7 @@ def ecg_rpeak(ecg_df, plot='no'):
     ecg_filtered, r_peaks = biosppy.signals.ecg.ecg(dataframe.ecg_signal, 125, 
                                                     show=True)[1:3]             # [1:3] To get filtered signal and R-peaks
     dataframe = dataframe.assign(ecg_filtered = ecg_filtered)                   # Add filtered ECG signal to dataframe
+    r_peaks =  r_peaks * 1/sampling_rate                                        # Convert from index to time in seconds
     nni = tools.nn_intervals(r_peaks)
     r_peaks_plot = [x+31158 for x in r_peaks]                                   # 31158 is a random number now, needs to be adjusted to the starting index of the ECG after NaN removal
     
