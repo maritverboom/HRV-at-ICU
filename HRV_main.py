@@ -63,7 +63,8 @@ def workflow_batch(patient_ids):
     for line in lines:
         ecg = preproc.load_data(patient_id = line)
         ecg_df = preproc.ecg_dataframe(ecg, 'no')
-        ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate, 'no')
+        ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate)
+        r_peaks, nni = preproc.ecg_ectopic_removal(r_peaks, nni)
         hrv_td, hrv_fd = hrvcalc.hrv_results(nni=nni, sampling_rate=125)
         
         batch_dataframes.append(ecg_df)

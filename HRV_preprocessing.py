@@ -80,7 +80,7 @@ def ecg_dataframe(record, plot='no'):
     return ecg_df
            
 
-def ecg_rpeak(ecg_df, sampling_rate, plot='no'):
+def ecg_rpeak(ecg_df, sampling_rate):
     """
     Function that uses bioSPPY toolbox in order to filter the ECG signal and
     detect R-peaks
@@ -91,23 +91,46 @@ def ecg_rpeak(ecg_df, sampling_rate, plot='no'):
     dataframe = dataframe.assign(ecg_filtered = ecg_filtered)                   # Add filtered ECG signal to dataframe
     r_peaks =  r_peaks * 1/sampling_rate                                        # Convert from index to time in seconds
     nni = tools.nn_intervals(r_peaks)
-    r_peaks_plot = [x+31158 for x in r_peaks]                                   # 31158 is a random number now, needs to be adjusted to the starting index of the ECG after NaN removal
-    
-    if plot == 'yes':                                                           # Plot showing raw ECG, filtered ECG and detected R-peaks
-        Plot, Axis = plt.subplots()
-        plt.subplots_adjust(bottom=0.25)
-        
-        plt.plot(dataframe.Time, dataframe.ecg_filtered, 
-                 label="Filtered ECG-signal", color = 'tab:orange')
-        plt.plot(dataframe.Time, dataframe.ecg_signal,
-                 label="Raw ECG-signal", color = 'tab:blue')
-        plt.plot(dataframe.Time[r_peaks_plot], dataframe.ecg_filtered[r_peaks_plot],
-                 "x", color = 'g', label="Detected R-peaks") 
-        plt.plot(dataframe.Time[r_peaks_plot], dataframe.ecg_signal[r_peaks_plot],
-                 "x", color = 'g', label="Detected R-peaks")
-        plt.title("Data loaded from MIMIC III Database")
-        plt.xlabel('Time (s)')
-        plt.ylabel('Voltage [mV]')
-        plt.legend()
-        
+                
     return dataframe, r_peaks, nni
+
+def ecg_ectopic_removal(r_peaks, nni):
+    "Function for the removal of outliers and ectopic beats"
+    nni_new = np.delete(nni, [np.where(nni < 300)])     # HR > 200 bpm
+    nni_new = np.delete(nni, [np.where(nni > 6000)])    # HR < 30 bpm
+
+    # Ectopic beat removal 
+    # If an ectopic beat occurs, two values of the NNI series will be ~half of the
+    # 'mean' NN interval. 
+    n = np.arange(1, len(nni), 1)[10:]
+    nni_true = nni_new.copy()
+    rrn = r_peaks[:-1]/1000
+    rrn_true = rrn.copy()
+    index = []
+
+    for i in n:
+        if nni[i] < 0.75*(np.mean(nni[i-11:i-1])):
+            if nni[i+1] < 0.75*(np.mean(nni[i-11:i-1])):
+                if nni[i+2] > 0.75*(np.mean(nni[i-11:i-1])):
+                    nni_true[i] = np.median(nni[i-11:i-1])
+                    rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
+                    index = index + [i+1]
+        if nni[i] > 1.15*(np.mean(nni[i-11:i-1])):
+            if nni[i+1] < 0.85*(np.mean(nni[i-11:i-1])):
+                if nni[i+2] > 0.75 * (np.mean(nni[i-11:i-1])):
+                    nni_true[i] = np.median(nni[i-11:i-1])
+                    rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
+                    index = index + [i+1]
+        if nni[i] < 0.85*(np.mean(nni[i-11:i-1])):
+            if nni[i+1] > 1.15*(np.mean(nni[i-11:i-1])):
+                if nni[i+2] > 0.75 * (np.mean(nni[i-11:i-1])):
+                    nni_true[i] = np.median(nni[i-11:i-1])
+                    rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
+                    index = index + [i+1]            
+        if nni[i] > 1.20*(np.mean(nni[i-11:i-1])) or nni[i] < 0.8*(np.mean(nni[i-11:i-1])):
+            nni_true[i] = np.median(nni[i-11:i-1])
+
+    nni_true = np.delete(nni_true, index)
+    rrn_true = np.delete(rrn_true, index)
+    
+    return rrn_true, nni_true
