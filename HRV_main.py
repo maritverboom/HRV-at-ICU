@@ -52,6 +52,7 @@ def workflow_batch(patient_ids):
     batch_td = list()
     batch_fd = list()
     batch_nni = list()
+   
     
     sampling_rate = 125
     
@@ -62,7 +63,7 @@ def workflow_batch(patient_ids):
     # For every patient ID
     for line in lines:
         ecg = preproc.load_data(patient_id = line)
-        ecg_df = preproc.ecg_dataframe(ecg, 'no')
+        ecg_df = preproc.ecg_dataframe(ecg)
         ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate)
         r_peaks, nni = preproc.ecg_ectopic_removal(r_peaks, nni)
         hrv_td, hrv_fd = hrvcalc.hrv_results(nni=nni, sampling_rate=125)
@@ -108,21 +109,37 @@ def workflow_batch(patient_ids):
             
     export_td = pd.DataFrame(matrix_td.T, index=tuplekeys_td, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient
     export_fd = pd.DataFrame(matrix_fd.T, index=tuplekeys_fd, columns=lines)       # DataFrame containing all calculated HRV parameters for every patient   
-   
-    # Write calculated parameters to excel sheet
-    writer = pd.ExcelWriter('HRV parameters.xlsx', engine = 'xlsxwriter')
-    export_td.to_excel(writer, sheet_name='Time Domain')
-    export_fd.to_excel(writer, sheet_name='Frequency Domain')
-    #export_nl.to_excel(writer, sheet_name='Non Linear')
-    #export_temp.to_excel(writer, sheet_name='Temp')
-    writer.save()
     
-    return batch_dataframes, batch_rpeaks, batch_td, batch_nni, export_td
+    # Write calculated parameters to .csv file
+    export_td.to_csv('timedomain.csv')
+    export_fd.to_csv('frequencydomain.csv')
+        
+    return batch_dataframes, batch_rpeaks, batch_td, batch_nni, export_td, hrv_td
     
 
 #%% Final calculations    
-batch_df, batch_r, batch_td, batch_nni, export_td = workflow_batch('files_id_test.txt')
+batch_df, batch_r, batch_td, batch_nni, export_td, hrv_td = workflow_batch('files_id_test.txt')
 
-                         
+#%% Evaluation of R-peak detection after ectopic beat removal
+for i in np.arange(0, len(batch_df), 1):
+    dataset = batch_df[i]
+    data = dataset.ecg_signal
+    time = dataset.Time
+    time = [x-time.iloc[0] for x in time]
+    rpiek = batch_r[i]
+    
+    plt.figure()
+    plt.plot(time, data)
+    for i in np.arange(0, len(rpiek), 1):
+        plt.axvline(rpiek[i], color = 'r')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude [mV]') 
+    plt.title('Visual evaluation of R-peak detection')
+
+
+
+    
+
+
 
 

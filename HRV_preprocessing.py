@@ -49,33 +49,24 @@ def load_data(patient_id, lead='II'):
                            LeadWanted)
     return record
 
-def ecg_dataframe(record, plot='no'):
+def ecg_dataframe(record):
     """
     INPUT:
         record
-        plot: 'yes', 'no'
-            default = 'no'
     OUTPUT:
         time axis
         plot
-    """
-        
+    """   
     t = np.linspace(0, record.sig_len, record.sig_len)                          # Length of signal                      
     time = pd.DataFrame(t)                                                      # Create dataframe for plotting
     time.columns = ['Time']                                                     # Change name of column to 'Time'
     ecg_df = time.assign(ecg_signal = pd.DataFrame(record.p_signal))            # Add ECG signal to dataframe
-    ecg_df = ecg_df.dropna()                                                    # Drop all rows of NaN values
+    
+    #NaN removal
+    index = np.arange(0, ecg_df.ecg_signal.first_valid_index(), 1)
+    ecg_df=ecg_df.drop(labels=index, axis=0)        
+    ecg_df = ecg_df.fillna(0)
     ecg_df.Time = ecg_df.Time/125                                               # Time axis in seconds (125 Hz)
-
-    if plot == 'yes':
-        plt.figure()
-        plt.plot(ecg_df.Time, ecg_df.ecg_signal, label="Raw ECG signal")
-        plt.title("Data loaded from MIMIC III Database")
-        plt.xlabel('Time (s)')
-        plt.ylabel('Voltage [mV]')
-        plt.legend()
-              
-        plt.show()
         
     return ecg_df
            
@@ -104,7 +95,7 @@ def ecg_ectopic_removal(r_peaks, nni):
     # 'mean' NN interval. 
     n = np.arange(1, len(nni), 1)[10:]
     nni_true = nni_new.copy()
-    rrn = r_peaks[:-1]/1000
+    rrn = r_peaks[:-1]
     rrn_true = rrn.copy()
     index = []
 
