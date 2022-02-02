@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import wfdb
 
 
-def load_data(patient_id, lead='II'):
+def load_data(patient_id, sampling_rate, sampfrom, sampto, lead='II'):
     """
     Function to load data from MIMIC-III database.
     
@@ -31,18 +31,21 @@ def load_data(patient_id, lead='II'):
         analysistype: 'single' or 'batch'
             single: analaysis of single ECG file
             batch: analysis of all ECG files in folder
+        sampling_rate:
+        sampfrom: starting sample [seconds]
+        sampto: last sample [seconds]
         lead: 'I', 'II', 'V'
             default = 'II'
+        
     OUTPUT:
         ECG = DataFrame containing all ECG records (single or multiple)
             Rows: ECG trace
             Colums: Datapoints
     """
     pt_id = patient_id
-    x = 0 
-    y = 3600
-    Sampfrom = 125*x                                                            # The starting sample number to read for all channels
-    Sampto = 125*y                                                              # The sample number at which to stop reading for all channels
+    sampling_rate = sampling_rate
+    Sampfrom = sampling_rate * sampfrom                                         # The starting sample number to read for all channels
+    Sampto = sampling_rate * sampto                                             # The sample number at which to stop reading for all channels
     LeadWanted = [lead]                                                         # Lead that is used for the analysis
     record = wfdb.rdrecord(pt_id[-7:], sampfrom = Sampfrom, sampto = Sampto, 
                            pn_dir=('mimic3wdb/'+pt_id), channel_names =
@@ -78,7 +81,7 @@ def ecg_rpeak(ecg_df, sampling_rate):
     """
     dataframe = ecg_df
     ecg_filtered, r_peaks = biosppy.signals.ecg.ecg(dataframe.ecg_signal, 125, 
-                                                    show=True)[1:3]             # [1:3] To get filtered signal and R-peaks
+                                                    show=False)[1:3]             # [1:3] To get filtered signal and R-peaks
     dataframe = dataframe.assign(ecg_filtered = ecg_filtered)                   # Add filtered ECG signal to dataframe
     r_peaks =  r_peaks * 1/sampling_rate                                        # Convert from index to time in seconds
     nni = tools.nn_intervals(r_peaks)
@@ -104,14 +107,14 @@ def ecg_ectopic_removal(r_peaks, nni):
             if nni[i+1] < 0.75*(np.mean(nni[i-11:i-1])):
                 if nni[i+2] > 0.75*(np.mean(nni[i-11:i-1])):
                     nni_true[i] = np.median(nni[i-11:i-1])
-                    rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
+                    #rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
                     index = index + [i+1]
-        if nni[i] > 1.15*(np.mean(nni[i-11:i-1])):
-            if nni[i+1] < 0.85*(np.mean(nni[i-11:i-1])):
-                if nni[i+2] > 0.75 * (np.mean(nni[i-11:i-1])):
-                    nni_true[i] = np.median(nni[i-11:i-1])
-                    rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
-                    index = index + [i+1]
+        #if nni[i] > 1.15*(np.mean(nni[i-11:i-1])):
+        #    if nni[i+1] < 0.85*(np.mean(nni[i-11:i-1])):
+        #        if nni[i+2] > 0.75 * (np.mean(nni[i-11:i-1])):
+        #            nni_true[i] = np.median(nni[i-11:i-1])
+        #            rrn_true[i] = rrn_true[i-1] + nni_true[i]/1000
+        #            index = index + [i+1]
         if nni[i] < 0.85*(np.mean(nni[i-11:i-1])):
             if nni[i+1] > 1.15*(np.mean(nni[i-11:i-1])):
                 if nni[i+2] > 0.75 * (np.mean(nni[i-11:i-1])):
