@@ -25,7 +25,7 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
     INPUT:
         patient_ids: .txt file of patient ID from MIMIC-III database
         sampfreq: sampling frequency of recording [Hz]
-        lead: ECG lead for analysis
+        lead: ECG lead for analysis: 'I', "II", "V"
         starttime: starting time of ECG analysis
         endtime: ending time of ECG analysis
     
@@ -47,7 +47,9 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
     # Create empty lists for storage of dataframes
     batch_dataframes = list()                                                   
     batch_rpeaks = list()
+    batch_rpeaks_first = list()
     batch_nni = list()
+    batch_nni_first = list()
     batch_all = list()
 
     # Read .txt file containing patient IDs
@@ -57,18 +59,20 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
     # For every patient ID calculate HRV parameters
     for line in lines:
         ecg = preproc.load_data(line, sampling_rate, starttime, endtime, lead)  # Load data
-        ecg_df = preproc.ecg_dataframe(ecg)                                     # Preprocessing
+        ecg_df = preproc.ecg_dataframe(ecg, sampling_rate)                      # Preprocessing
         ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate)         # R_peak detection and nni calculation
-        r_peaks, nni = preproc.ecg_ectopic_removal(r_peaks, nni)                # Ectopic beat removal 
-        hrv_td, hrv_fd, hrv_nl = hrvcalc.hrv_results(nni=nni,                   # HRV calculations for td: timedomain, fd: frequency domain, nl: nonlinear
+        r_peaks_ect, nni_ect = preproc.ecg_ectopic_removal(r_peaks, nni)                # Ectopic beat removal 
+        hrv_td, hrv_fd, hrv_nl = hrvcalc.hrv_results(nni=nni_ect,                   # HRV calculations for td: timedomain, fd: frequency domain, nl: nonlinear
                                                      sampling_rate=125)
         hrv_all = pyhrv.utils.join_tuples(hrv_td, hrv_fd, hrv_nl)               # Join tuples of td, fd and nl
         
         # Store dataframes per patient in list
         batch_dataframes.append(ecg_df)                                             
-        batch_rpeaks.append(r_peaks)
-        batch_nni.append(nni)
+        batch_rpeaks.append(r_peaks_ect)
+        batch_nni.append(nni_ect)
         batch_all.append(hrv_all)
+        batch_nni_first.append(nni)
+        batch_rpeaks_first.append(r_peaks)
         
     # Exportfile
     tuplekeys_all = batch_all[0].keys()                                         # Names of HRV parameters
@@ -91,4 +95,4 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
     export_all = pd.DataFrame(matrix_all, index=lines, columns=tuplekeys_all)   # Create dataframe for exportfile
     export_all.to_csv('HRVparameters.csv')                                      # Write calculated parameters to .csv file
         
-    return batch_dataframes, batch_nni, batch_rpeaks, export_all
+    return batch_dataframes, batch_nni_first, batch_rpeaks_first, batch_nni, batch_rpeaks, export_all
