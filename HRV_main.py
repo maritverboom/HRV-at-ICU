@@ -40,7 +40,7 @@ import HRV_evaluation as viseval
 #%% HRV calculations    
 
 # Specify input variables
-patient_ids = 'files_id.txt'                                               # .txt file containing patient_IDs
+patient_ids = 'files_id.txt'                                                    # .txt file containing patient_IDs
 sampfreq = 125                                                                  # Sample frequency in Hertz [Hz]
 lead = 'II'                                                                     # ECG lead to analyze 
 starttime = 0                                                                   # Starting time of analysis [s]

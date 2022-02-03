@@ -67,7 +67,7 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
         ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate)         # R_peak detection and nni calculation
         r_peaks_ect, nni_ect = preproc.ecg_ectopic_removal(r_peaks, nni)                # Ectopic beat removal 
         hrv_td, hrv_fd, hrv_nl = hrvcalc.hrv_results(nni=nni_ect,                   # HRV calculations for td: timedomain, fd: frequency domain, nl: nonlinear
-                                                     sampling_rate=125)
+                                                     sampfreq=sampling_rate)
         hrv_all = pyhrv.utils.join_tuples(hrv_td, hrv_fd, hrv_nl)               # Join tuples of td, fd and nl
         
         # Store dataframes per patient in list
