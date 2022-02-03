@@ -12,6 +12,22 @@ import matplotlib.pyplot as plt
 
 #%% Visual evaluation of R peaks
 def visual_evaluation_rpeaks(batch_df, batch_rpeaks):
+    """
+    Function that creates a plot for the visual evaluation of R-peak detection.
+    The plot that is created shows the raw ECG signal with all detected R-peaks
+    by the algorithm. 
+    
+    INPUT:
+        batch_df: list containing dataframes with raw ecg,
+                          filtered ecg and time of all patients
+        batch_rpeaks: list containing all locations of r-peaks for all 
+                      patients [s]   
+    
+    OUTPUT:
+        plot with raw ECG signal and detected R-peaks
+    """
+    
+    
     for i in np.arange(0, len(batch_df), 1):
         dataset = batch_df[i]
         data = dataset.ecg_signal
@@ -31,6 +47,23 @@ def visual_evaluation_rpeaks(batch_df, batch_rpeaks):
 #%% Visual evalation of NNI series
 
 def visual_evaluation_nni(batch_nni, batch_rpeaks, batch_nni_first, batch_rpeaks_first):
+    """
+    Function that creates a plot for the visual evaluation of NNI correction.
+    The plot that is created shows the NNI series before and after removal of
+    ectopic beats and outliers. 
+    
+    INPUT:
+        batch_nni: list containing arrays with nni per included patient [ms]
+        batch_nni_first: list containing arrays with nni per included patient 
+                         [ms], before ectopic beat- and outlier removal
+        batch_rpeaks: list containing arrays with rpeak locations [s]
+        batch_rpeaks_first: list containing array with rpeak locations [s]-
+                            before ectopic beat- and outlier removal
+    
+    OUTPUT:
+        plot with NNI series before and after ectopic beat- and outlier removal
+    """
+    
     for i in np.arange(0, len(batch_nni), 1):
         rpeak = batch_rpeaks[i]
         rpeak_first = batch_rpeaks_first[i]

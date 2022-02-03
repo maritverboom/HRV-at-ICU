@@ -33,8 +33,12 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
         batch_dataframes: list containing dataframes with raw ecg,
                           filtered ecg and time of all patients
         batch_rpeaks: list containing all locations of r-peaks for all 
-                      patients [s]   
+                      patients [s]
+        batch_rpeaks_first: list containing array with rpeak locations [s]
+                            before ectopic beat- and outlier removal
         batch_nni: list containing arrays with nni per included patient [ms]
+        batch_nni_first: list containing arrays with nni per included patient 
+                         [ms], before ectopic beat- and outlier removal
         export_all: dataframe with rows = patients, columns = HRV parameters  
     """
     
