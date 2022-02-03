@@ -96,7 +96,7 @@ def ecg_ectopic_removal(r_peaks, nni):
     # Ectopic beat removal 
     # If an ectopic beat occurs, two values of the NNI series will be ~half of the
     # 'mean' NN interval. 
-    n = np.arange(1, len(nni), 1)[10:]
+    n = np.arange(1, len(nni), 1)[10:-5]
     nni_true = nni_new.copy()
     rrn = r_peaks[:-1]
     rrn_true = rrn.copy()

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec 21 08:49:37 2021
-
-@author: marit
+HRV calculations
+Created: 10/2021 - 02/2022
+Python v3.8
+Author: M. Verboom
 """
 
 # HRV toolbox
@@ -31,13 +32,13 @@ def hrv_results(nni, sampling_rate):
     rmssd = td.rmssd(nni=nni)                                                    # root mean of square differences of successive NN intervals
     sdsd = td.sdsd(nni=nni)                                                      # std of differences of successive NN intervals
     nn50 = td.nn50(nni=nni)                                                      # NN differences > 50 ms                                              
-    triang = td.triangular_index(nni=nni, binsize=7.8125, show=False)                        # triangular index bas on NN interval histogram
+    triang = td.triangular_index(nni=nni, binsize=7.8125, plot=False, show=False)                        # triangular index bas on NN interval histogram
     results_td = pyhrv.utils.join_tuples(nnpar, nndif, hr, sdnn, sdnni, sdann, 
                                          rmssd, sdsd, nn50, triang)
        
          
     # Frequency domain
-    fbands={'ulf': (0.00, 0.003), 'vlf': (0.003, 0.04), 'lf': (0.04, 0.15), 'hf': (0.15, 0.4)}  
+    fbands={'ulf': (0.00, 0.003), 'vlf': (0.003, 0.04), 'lf': (0.04, 0.15), 'hf': (0.15, 0.4)}
     results = fd.welch_psd(nni=nni, fbands=fbands, show=False, mode='normal')
     abs_ulf = results[2][0]
     abs_vlf = results[2][1]
