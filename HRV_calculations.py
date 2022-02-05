@@ -90,5 +90,4 @@ def hrv_results(nni, sampfreq):
     entropy = pyhrv.nonlinear.sample_entropy(nni)                               # Calculate sample entropy
     dfa = pyhrv.nonlinear.dfa(nni, show=False)                                  # Perform DFA analysis
     results_nl = pyhrv.utils.join_tuples(poincare, entropy, dfa)
-    
     return results_td, results_fd, results_nl

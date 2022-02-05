@@ -107,11 +107,15 @@ def ecg_ectopic_removal(r_peaks, nni):
         
     """
     
-    n = np.arange(1, len(nni), 1)[10:-5]                                        # Number of nni intervals from 10th until end-5th value 
+    n = np.arange(1, len(nni), 1)[10:-2]                                        # Number of nni intervals from 10th until end-5th value 
     nni_true = nni.copy()
     rrn = r_peaks[:-1]
     rrn_true = rrn.copy()
     index = []
+    
+    for i in np.arange(1, len(nni), 1):
+         if nni[i] > 6000 or nni[i] < 300:                                      # Delete NNI and corresponding R-peaks of non-physiological values
+            index = index + [i]
     
     for i in n:                                                                 # For every nni
         if nni[i] < 0.75*(np.mean(nni[i-11:i-1])):                              # If nni < 0.75 times the mean of the previous 10 nnis
@@ -127,8 +131,6 @@ def ecg_ectopic_removal(r_peaks, nni):
                     index = index + [i+1]                                       # Index of consecutive nni/rpeak (will be removed later on)        
         if nni[i] > 1.15*(np.mean(nni[i-11:i-1])) or nni[i] < 0.85*(np.mean(nni[i-11:i-1])):
             nni_true[i] = np.median(nni[i-11:i-1])
-        if nni[i] > 6000 or nni[i] < 300:                                       # Delete NNI and corresponding R-peaks of non-physiological values
-            index = index + [i]
     
     nni_true = np.delete(nni_true, index)                                       # Remove all 'extra' nni intervals from data
     rrn_true = np.delete(rrn_true, index)                                       # Remove all 'extra' r peaks from data

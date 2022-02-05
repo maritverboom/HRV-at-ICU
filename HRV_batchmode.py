@@ -62,10 +62,11 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
 
     # For every patient ID calculate HRV parameters
     for line in lines:
+        print(line)
         ecg = preproc.load_data(line, sampling_rate, starttime, endtime, lead)  # Load data
         ecg_df = preproc.ecg_dataframe(ecg, sampling_rate)                      # Preprocessing
         ecg_df, r_peaks, nni = preproc.ecg_rpeak(ecg_df, sampling_rate)         # R_peak detection and nni calculation
-        r_peaks_ect, nni_ect = preproc.ecg_ectopic_removal(r_peaks, nni)                # Ectopic beat removal 
+        r_peaks_ect, nni_ect = preproc.ecg_ectopic_removal(r_peaks, nni)        # Ectopic beat removal 
         hrv_td, hrv_fd, hrv_nl = hrvcalc.hrv_results(nni=nni_ect,                   # HRV calculations for td: timedomain, fd: frequency domain, nl: nonlinear
                                                      sampfreq=sampling_rate)
         hrv_all = pyhrv.utils.join_tuples(hrv_td, hrv_fd, hrv_nl)               # Join tuples of td, fd and nl
@@ -97,6 +98,7 @@ def workflow_batch(patient_ids, sampfreq, lead, starttime, endtime):
         matrix_all = np.vstack((matrix_all, stack))                             # Add HRV parameters for patient i to final matrix
             
     export_all = pd.DataFrame(matrix_all, index=lines, columns=tuplekeys_all)   # Create dataframe for exportfile
-    export_all.to_csv('HRVparameters.csv')                                      # Write calculated parameters to .csv file
+    export_all = export_all.drop(['dfa_alpha1_beats', 'dfa_alpha2_beats'], axis=1)
+    #export_all.to_csv('HRVparameters.csv')                                      # Write calculated parameters to .csv file
         
     return batch_dataframes, batch_nni_first, batch_rpeaks_first, batch_nni, batch_rpeaks, export_all
